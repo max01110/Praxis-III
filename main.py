@@ -36,6 +36,8 @@ c = 0
 
 closedDoorState = 0
 timePrev = 0
+temperature = 0
+threshold = 20
 
 #######LOW LEVEL FUNCTIONS############
 
@@ -44,7 +46,7 @@ timePrev = 0
 #######HIGH LEVEL FUNCTIONS###########
 def coolingOn():
     print("Starting Cooling")
-    time.sleep(1)
+   # time.sleep(1)
     
     #OPEN LATCH (TBD)
     #Turn on fans
@@ -55,7 +57,7 @@ def coolingOn():
 
 def coolingOff():
     print("Stopping Cooling")
-    time.sleep(1)
+   # time.sleep(1)
 
 def doorOpen():
     global ranOnceClosed, ranOnceOpen, led_red, led_green
@@ -75,17 +77,15 @@ def doorOpen():
 def doorClosed():
     global ranOnceClosed, ranOnceOpen, interval, led_red, led_green, UVTimeON, sleepTime, closedDoorState, timePrev
     if ranOnceClosed == 0:
-        print("test")
         ranOnceClosed = 1
         ranOnceOpen = 0
         print("Door Closed")
         print("Main Lights: OFF")
         timePrev = time.time()
         led_green.value = False #TURN OFF MAIN LIGHTS
-        closedDoorState = 0
-    
-    #led_red.value = False
-    
+        closedDoorState = 1
+        
+    #LIGHTING (UV light)
     if closedDoorState == 0:
         if (time.time() - timePrev < sleepTime):
             print("UV Lights: ON")
@@ -105,7 +105,7 @@ def doorClosed():
             closedDoorState = 0
             
     
-        
+    
     
     
     
@@ -115,6 +115,8 @@ def doorClosed():
 # Loop so the code runs continuously
 while True:
     
+    
+    
     if button.value == False:
         pressed = True
         if door == 1:
@@ -122,6 +124,17 @@ while True:
         else:
             door = 1
 
+    #Water cooling system
+    
+    if (temperature > threshold):
+        coolingOn()
+        
+    else:
+        coolingOff()
+
+
+
+    #Doors + lighting system
     if door == 0:
         doorClosed()
         time.sleep(0.2)
