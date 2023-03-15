@@ -1,0 +1,22 @@
+import time
+import board
+import pwmio
+from adafruit_motor import servo
+
+# create a PWMOut object on Pin A2.
+pwm = pwmio.PWMOut(board.GP16, duty_cycle=2 ** 15, frequency=50)
+
+# Create a servo object, my_servo.
+my_servo = servo.Servo(pwm)
+
+while True:
+    open_close = int(input("Enter 0 for open, 1 for close: "))
+    if open_close == 0:
+        for i in range(11):
+            my_servo.angle = 1
+            time.sleep(0.001)
+    elif open_close == 1:
+        for i in range(33):
+            my_servo.angle = 179
+            time.sleep(0.001)
+    my_servo.angle = 90
