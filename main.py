@@ -1,6 +1,6 @@
 '''
-ESC204 2023S Lab 2 Task D
-Task: Light up onboard LED on button press.
+ESC204 - Evaporative Cooling Fridge
+
 '''
 # Import libraries needed for blinking the LED
 import board
@@ -30,8 +30,12 @@ door = 0
 ranOnceClosed = 0
 ranOnceOpen = 0
 
-UVTimeON = 10
+UVTimeON = 5
+sleepTime = 5
 c = 0
+
+closedDoorState = 0
+timePrev = 0
 
 #######LOW LEVEL FUNCTIONS############
 
@@ -54,7 +58,7 @@ def coolingOff():
     time.sleep(1)
 
 def doorOpen():
-    global ranOnceClosed, ranOnceOpen, led_red
+    global ranOnceClosed, ranOnceOpen, led_red, led_green
     if ranOnceOpen == 0:
         ranOnceOpen = 1
         ranOnceClosed = 0
@@ -62,34 +66,51 @@ def doorOpen():
         print("Main Lights: ON")
     
     led_red.value = False
+    led_green.value = True
 
 
 
     
     
 def doorClosed():
-    global ranOnceClosed, ranOnceOpen, interval, led_red, c
+    global ranOnceClosed, ranOnceOpen, interval, led_red, led_green, UVTimeON, sleepTime, closedDoorState, timePrev
     if ranOnceClosed == 0:
+        print("test")
         ranOnceClosed = 1
         ranOnceOpen = 0
         print("Door Closed")
         print("Main Lights: OFF")
-        sleepTimePrev = time.time()
+        timePrev = time.time()
+        led_green.value = False #TURN OFF MAIN LIGHTS
+        closedDoorState = 0
     
+    #led_red.value = False
     
-    
-    if (time.time() - sleepTimePrev < sleepTime):
-        led_red.value = False
-        
-    else
-    if (time.time() - c < UVTimeON):
-        led_red.value = True
-    
-    
-    
-    
-    
+    if closedDoorState == 0:
+        if (time.time() - timePrev < sleepTime):
+            print("UV Lights: ON")
+            led_red.value = True
 
+        else:
+            timePrev = time.time()
+            closedDoorState = 1
+    
+    else:
+        if (time.time() - timePrev < UVTimeON):
+            print("UV Lights: OFF")
+            led_red.value = False
+        else:
+
+            timePrev = time.time()
+            closedDoorState = 0
+            
+    
+        
+    
+    
+    
+    
+    
 
 # Loop so the code runs continuously
 while True:
@@ -111,8 +132,5 @@ while True:
         
 
    
-
-
-
 
 
