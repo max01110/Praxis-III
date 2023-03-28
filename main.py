@@ -1,6 +1,5 @@
 '''
 ESC204 - Evaporative Cooling Fridge
-
 '''
 # Import libraries needed for blinking the LED
 import board
@@ -46,7 +45,7 @@ ranOnceOpen = 0
 
 UVTimeON = 5
 sleepTime = 5
-doorOpenThreshold = 5
+doorOpenThreshold = 2
 c = 0
 
 closedDoorState = 0
@@ -54,7 +53,8 @@ timePrev = 0
 temperature = 0
 threshold = 20
 lightVal = 0
-
+coolOn = 0
+openValve = False
 
 ########PHOTORESISTOR SETUP##############
 # set display to show either ADC output representative integer or
@@ -77,6 +77,13 @@ photoresistor = analogio.AnalogIn(photoresistor_pin)
 # corresponding analog integer value
 ADC_REF = photoresistor.reference_voltage
 
+
+button = digitalio.DigitalInOut(board.GP2)
+button.direction = digitalio.Direction.INPUT
+button.pull = digitalio.Pull.UP # Set the internal resistor to pull−up
+pressed = 0
+valveOpenThreshold = 5
+
 # convert ADC input value back to voltage
 def adc_to_voltage(adc_value):
     return  ADC_REF * (float(adc_value)/float(ADC_HIGH))
@@ -84,7 +91,6 @@ def adc_to_voltage(adc_value):
 #######LOW LEVEL FUNCTIONS############
 def buzz():
     global buzzer
-    print("buzzing")
     for duty in range(5):
         # increasing duty cycle
         buzzer.duty_cycle = 10000
@@ -96,24 +102,29 @@ def buzz():
 
 #######HIGH LEVEL FUNCTIONS###########
 def coolingOn():
-    global fans
-    print("Starting Cooling")
+    global fans, my_servo, openValve, valveOpenThreshold, timePrev
+    print("Cooling On")
+    
+    if openValve == False:
+        openValve = True
+        timePrev = time.time()
+        for i in range(11):
+            my_servo.angle = 1
+            time.sleep(0.001)
 
-   # time.sleep(1)
+    
 
-    #OPEN LATCH (TBD)
+    my_servo.angle = 90
+
     #Turn on fans
-    #Update LCD Display
 
-    #Dampen sponge (open valve)
+   
 
-
-    print("Cooling")
 
 
 def coolingOff():
     global fans
-    print("Stopping Cooling")
+    print("Cooling Stopped")
    # time.sleep(1)
 
 def doorOpen():
@@ -140,7 +151,6 @@ def doorClosed():
     if ranOnceClosed == 0:
         ranOnceClosed = 1
         ranOnceOpen = 0
-        print("Door Closed")
         print("Main Lights: OFF")
         timePrev = time.time()
         led_green.value = False #TURN OFF MAIN LIGHTS
@@ -173,13 +183,37 @@ def doorClosed():
 
 
 
-
-
-
+timePrevValve = 0
+valveClosed = 1
 
 # Loop so the code runs continuously
 while True:
+    
+    if (time.time() - timePrevValve > valveOpenThreshold):
+        if valveClosed == 0:
+            valveClosed = 1
+            for i in range(11):
+                my_servo.angle = 1
+                time.sleep(0.001)
+    
+            my_servo.angle = 90
+            
 
+    
+    if pressed == False:
+        if button.value == False: # If the button is pressed
+            if coolOn == False:
+                coolOn = True
+                timePrevValve = time.time()
+                valveClosed = 0
+            else:
+                coolOn = False
+        
+   
+            pressed = True
+    elif pressed == True: # If
+        if button.value == True: # If the button is depressed
+            pressed = False
 
 
     if mode == INT_MODE:
@@ -197,33 +231,24 @@ while True:
 
 
     #Water cooling system
-
-   # if (temperature > threshold):
-    #    coolingOn()
-    #else:
-    #    coolingOff()
-
+    if coolOn == True:
+        coolingOn()
+        
+    else:
+        coolingOff()
 
 
     #Doors + lighting system
     if door == 0:
         fans.value = True
         fans1.value = True
-        #fans2.duty_cycle = 500
-        #coolingOn()
+
         doorClosed()
-        time.sleep(0.2)
+        
+      
 
     else:
         fans.value = True
         fans1.value = True
-        #fans2.duty_cycle = 500
-
-        #coolingOff()
         doorOpen()
-        time.sleep(0.2)
-
-
-
-
-
+        time.sleep(0.1)
