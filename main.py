@@ -19,8 +19,6 @@ led_blue.direction = digitalio.Direction.OUTPUT
 led_red = digitalio.DigitalInOut(board.GP18)
 led_red.direction = digitalio.Direction.OUTPUT
 
-fans = digitalio.DigitalInOut(board.GP0)
-fans.direction = digitalio.Direction.OUTPUT
 fans1 = digitalio.DigitalInOut(board.GP1)
 fans1.direction = digitalio.Direction.OUTPUT
 
@@ -102,7 +100,9 @@ def buzz():
 
 #######HIGH LEVEL FUNCTIONS###########
 def coolingOn():
-    global fans, my_servo, openValve, valveOpenThreshold, timePrev
+    global fans, my_servo, openValve, valveOpenThreshold, timePrev, fans1
+    fans1.value = True
+
     print("Cooling On")
     
     if openValve == False:
@@ -123,7 +123,9 @@ def coolingOn():
 
 
 def coolingOff():
-    global fans
+    global fans1
+    fans1.value = False
+
     print("Cooling Stopped")
    # time.sleep(1)
 
@@ -240,15 +242,11 @@ while True:
 
     #Doors + lighting system
     if door == 0:
-        fans.value = True
-        fans1.value = True
 
         doorClosed()
         
       
 
     else:
-        fans.value = True
-        fans1.value = True
         doorOpen()
         time.sleep(0.1)
