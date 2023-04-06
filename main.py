@@ -9,10 +9,17 @@ import analogio
 import pwmio
 from adafruit_motor import servo
 import adafruit_rgbled
+import bitbangio
+import adafruit_am2320
 
+
+i2c = bitbangio.I2C(board.GP14, board.GP15)
+dhtDevice = adafruit_am2320.AM2320(i2c)
 
 led_uv = digitalio.DigitalInOut(board.GP21)
 led_uv.direction = digitalio.Direction.OUTPUT
+
+
 
 
 led_blue = board.GP20
@@ -21,6 +28,15 @@ led_blue = board.GP20
 led_green = board.GP17
 
 led_red = board.GP16
+
+led_2_blue = board.GP7
+
+led_2_green = board.GP8
+
+led_2_red = board.GP9
+
+
+led2 = adafruit_rgbled.RGBLED(led_2_red, led_2_blue, led_2_green)
 
 led = adafruit_rgbled.RGBLED(led_red, led_blue, led_green)
 
@@ -34,10 +50,6 @@ fans1.direction = digitalio.Direction.OUTPUT
 buzzer = pwmio.PWMOut(board.GP19, duty_cycle = 1000, frequency = 500, variable_frequency = True)
 buzzer.duty_cycle = 0
 # Configure the internal GPIO connected to the button as a digital input
-button = digitalio.DigitalInOut(board.GP15)
-button.direction = digitalio.Direction.INPUT
-button.pull = digitalio.Pull.UP # Set the internal resistor to pull-up
-
 
 pwm = pwmio.PWMOut(board.GP27, duty_cycle=2 ** 15, frequency=50)
 my_servo = servo.Servo(pwm)
@@ -99,7 +111,7 @@ def buzz():
     for duty in range(5):
         # increasing duty cycle
         buzzer.duty_cycle = 10000
-        led.color = (255, 0, 0)
+        led.color = (0, 255, 255)
         time.sleep(0.2)
         led.color = (0, 0, 0)
         buzzer.duty_cycle = 0
@@ -113,13 +125,13 @@ def coolingOn():
     global fans, my_servo, openValve, valveOpenThreshold, timePrev, fans1
     fans1.value = True
 
-    print("Cooling On")
+   # print("Cooling On")
 
     if openValve == False:
         openValve = True
         my_servo.angle = 90
         timePrev = time.time()
-        for i in range(8):
+        for i in range(11):
             my_servo.angle = 1
             time.sleep(0.001)
 
@@ -138,7 +150,7 @@ def coolingOff():
     fans1.value = False
     openValve = False
 
-    print("Cooling Stopped")
+  #  print("Cooling Stopped")
    # time.sleep(1)
 
 def doorOpen():
@@ -146,8 +158,8 @@ def doorOpen():
     if ranOnceOpen == 0:
         ranOnceOpen = 1
         ranOnceClosed = 0
-        print("UV Lights: OFF")
-        print("Main Lights: ON")
+       # print("UV Lights: OFF")
+       # print("Main Lights: ON")
         timePrev = time.time()
 
     if (time.time() - timePrev > doorOpenThreshold):
@@ -174,7 +186,7 @@ def doorClosed():
     #LIGHTING (UV light)
     if closedDoorState == 0:
         if (time.time() - timePrev < sleepTime):
-            print("UV Lights: ON")
+          #  print("UV Lights: ON")
             led_uv.value = True
 
 
@@ -186,7 +198,7 @@ def doorClosed():
 
     else:
         if (time.time() - timePrev < UVTimeON):
-            print("UV Lights: OFF")
+          #  print("UV Lights: OFF")
             led_uv.value = False
 
         else:
@@ -202,11 +214,29 @@ valveClosed = 1
 
 # Loop so the code runs continuously
 while True:
+    try:
+        temp_c = dhtDevice.temperature
+        print(temp_c)
+        if (temp_c > 24):
+            led2.color = (0,0,0)
+        elif (temp > 22):
+            led2.color = (255,0,0)
+        elif (temp > 20):
+            led2.color = (0,255,0)
+        elif (temp > 18):
+            led2.color = (0,0,255)
+        elif (temp > 16):
+            led2.color = (255,255,0)
+        elif (temp < 16):
+            led2.color = (0,255,255)
+    except:
+        print("there was an error")
+ #   print("TEMPERATURE", temp_c)
 
     if (time.time() - timePrevValve > valveOpenThreshold):
         if valveClosed == 0:
             valveClosed = 1
-            for i in range(7):
+            for i in range(11):
                 my_servo.angle = 1
                 time.sleep(0.001)
 
@@ -237,7 +267,7 @@ while True:
         lightVal = (adc_to_voltage(photoresistor.value))
 
     time.sleep(0.1)
-    print(lightVal)
+   # print(lightVal)
 
     if lightVal > 55000:
         door = 0
